@@ -1,5 +1,5 @@
 {
-  "name": "letsbonk-sdk",
+  "name": "letsbonkdotfun-sdk",
   "version": "1.0.0",
   "description": "TypeScript SDK for LetsBonk trading protocol",
   "main": "dist/index.js",

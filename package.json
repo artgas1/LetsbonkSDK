@@ -67,6 +67,14 @@
   ],
   "author": "Artem Gasparyan",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artgas1/LetsbonkSDK.git"
+  },
+  "homepage": "https://github.com/artgas1/LetsbonkSDK#readme",
+  "bugs": {
+    "url": "https://github.com/artgas1/LetsbonkSDK/issues"
+  },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@solana/spl-token": "^0.4.8",

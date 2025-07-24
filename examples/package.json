@@ -1,0 +1,23 @@
+{
+  "name": "letsbonk-sdk-examples",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Examples for using LetsBonkSDK as a library",
+  "scripts": {
+    "basic": "ts-node basic-usage.ts",
+    "advanced": "ts-node advanced-usage.ts",
+    "launch-and-sell": "ts-node launch_buy_and_sell_token.ts",
+    "all": "npm run basic && npm run advanced"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.2",
+    "bs58": "^5.0.0",
+    "dotenv": "^17.2.0",
+    "letsbonk-sdk": "file:.."
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

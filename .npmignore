@@ -1,0 +1,52 @@
+# Source files (keep src/ for source code access)
+tests/
+examples/
+scripts/
+
+# Development files
+.env*
+.vscode/
+.idea/
+*.log
+coverage/
+.nyc_output/
+test-results/
+test-ledger/
+test-ledger-accounts/
+
+# Build configuration
+tsconfig.json
+jest.config.js
+jest.config.*.js
+.eslintrc.js
+.prettierrc.js
+tsup.config.ts
+
+# Development dependencies
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Git files
+.git/
+.gitignore
+
+# Documentation (keep only essential docs)
+README.accounts.md
+README.localnet.md
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~ 

@@ -39,7 +39,7 @@ beforeAll(async () => {
     commitment: 'processed', // Faster than 'confirmed'
     confirmTransactionInitialTimeout: 10000, // 10s timeout
     disableRetryOnRateLimit: true, // Disable features that might create WebSocket connections
-    httpHeaders: { 'User-Agent': 'letsbonk-sdk-test' }, // Custom headers to help identify test traffic
+    httpHeaders: { 'User-Agent': 'letsbonkdotfun-sdk-test' }, // Custom headers to help identify test traffic
   });
   
   // Verify localnet is accessible

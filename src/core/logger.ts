@@ -84,7 +84,7 @@ export class SDKLogger {
 
     const pinoOptions: LoggerOptions = {
       level: this.config.level,
-      name: 'letsbonk-sdk',
+      name: 'letsbonkdotfun-sdk',
       base: {
         version: '1.0.0',
         sdk: 'letsbonk',

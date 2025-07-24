@@ -12,7 +12,7 @@ import { CreateTokenMetadata } from '../src/types';
 
 ### Library Import (Updated)
 ```typescript
-import { createSDK, CreateTokenMetadata } from 'letsbonk-sdk';
+import { createSDK, CreateTokenMetadata } from 'letsbonkdotfun-sdk';
 ```
 
 ## Setup Methods
@@ -31,7 +31,7 @@ import { createSDK, CreateTokenMetadata } from 'letsbonk-sdk';
    npm install
    ```
 
-   The `package.json` uses `"letsbonk-sdk": "file:../"` to install from the parent directory.
+   The `package.json` uses `"letsbonkdotfun-sdk": "file:../"` to install from the parent directory.
 
 3. **Run the library example:**
    ```bash
@@ -48,19 +48,19 @@ import { createSDK, CreateTokenMetadata } from 'letsbonk-sdk';
 
 2. **In your project directory:**
    ```bash
-   npm link letsbonk-sdk
+   npm link letsbonkdotfun-sdk
    npm install @solana/web3.js bs58 dotenv
    ```
 
 3. **Use in your TypeScript files:**
    ```typescript
-   import { createSDK, CreateTokenMetadata } from 'letsbonk-sdk';
+   import { createSDK, CreateTokenMetadata } from 'letsbonkdotfun-sdk';
    ```
 
 ### Method 3: Install from npm (If Published)
 
 ```bash
-npm install letsbonk-sdk
+npm install letsbonkdotfun-sdk
 ```
 
 ## Available Imports
@@ -69,17 +69,17 @@ The LetsBonkSDK library exports everything you need:
 
 ```typescript
 // Main SDK factory
-import { createSDK } from 'letsbonk-sdk';
+import { createSDK } from 'letsbonkdotfun-sdk';
 
 // Types
-import { CreateTokenMetadata, SDKResult } from 'letsbonk-sdk';
+import { CreateTokenMetadata, SDKResult } from 'letsbonkdotfun-sdk';
 
 // Core functionality (if needed separately)
-import { TokenManager } from 'letsbonk-sdk/core';
-import { TransactionManager } from 'letsbonk-sdk/managers';
+import { TokenManager } from 'letsbonkdotfun-sdk/core';
+import { TransactionManager } from 'letsbonkdotfun-sdk/managers';
 
 // Everything at once
-import * as LetsBonk from 'letsbonk-sdk';
+import * as LetsBonk from 'letsbonkdotfun-sdk';
 ```
 
 ## Examples

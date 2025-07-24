@@ -2,8 +2,8 @@
 
 import { Connection, Keypair } from '@solana/web3.js';
 // Import from local source files to test our changes
-import { createSDK } from 'letsbonk-sdk';
-import type { CreateTokenMetadata } from 'letsbonk-sdk';
+import { createSDK } from 'letsbonkdotfun-sdk';
+import type { CreateTokenMetadata } from 'letsbonkdotfun-sdk';
 import bs58 from 'bs58';
 import * as dotenv from 'dotenv';
 
@@ -94,7 +94,7 @@ async function main() {
     console.log('\n🚀 Launching token and buying in one transaction...');
 
     // All amounts in the SDK are now in raw lamports for maximum precision
-    // You can use: import { solToLamports } from 'letsbonk-sdk'; 
+            // You can use: import { solToLamports } from 'letsbonkdotfun-sdk'; 
     // const buyAmountLamports = solToLamports(0.00001); // Convert 0.00001 SOL to lamports
     const buyAmountLamports = BigInt(10000); // Buy 10,000 lamports (0.00001 SOL) worth of tokens immediately
 
@@ -174,7 +174,7 @@ async function main() {
   } catch (error) {
     console.error('❌ Script failed:', error);
     console.error('\n💡 Common issues:');
-    console.error('  - Make sure letsbonk-sdk is installed: npm install letsbonk-sdk');
+            console.error('  - Make sure letsbonkdotfun-sdk is installed: npm install letsbonkdotfun-sdk');
     console.error('  - Make sure solana-test-validator is running for localnet');
     console.error('  - Ensure you have SOL in your wallet');
     console.error('  - Check that required programs are deployed');

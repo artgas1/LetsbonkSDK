@@ -14,14 +14,14 @@ A modern TypeScript SDK for the LetsBonk trading protocol on Solana.
 ## Installation
 
 ```bash
-npm install letsbonk-sdk
+npm install letsbonkdotfun-sdk
 ```
 
 ## Quick Start
 
 ```typescript
 import { Connection, Keypair } from '@solana/web3.js';
-import { createSDK } from 'letsbonk-sdk';
+import { createSDK } from 'letsbonkdotfun-sdk';
 
 const connection = new Connection('https://api.mainnet-beta.solana.com');
 const sdk = createSDK(connection);

@@ -1,5 +1,5 @@
 {
-  "name": "letsbonk-sdk-examples",
+  "name": "letsbonkdotfun-sdk-examples",
   "version": "1.0.0",
   "type": "module",
   "description": "Examples for using LetsBonkSDK as a library",
@@ -13,7 +13,7 @@
     "@solana/web3.js": "^1.98.2",
     "bs58": "^5.0.0",
     "dotenv": "^17.2.0",
-    "letsbonk-sdk": "file:.."
+    "letsbonkdotfun-sdk": "file:.."
   },
   "devDependencies": {
     "@types/node": "^20.19.9",

@@ -17,7 +17,7 @@ importers:
       dotenv:
         specifier: ^17.2.0
         version: 17.2.0
-      letsbonk-sdk:
+      letsbonkdotfun-sdk:
         specifier: file:..
         version: file:..(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)
     devDependencies:
@@ -375,7 +375,7 @@ packages:
   json-stringify-safe@5.0.1:
     resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
 
-  letsbonk-sdk@file:..:
+  letsbonkdotfun-sdk@file:..:
     resolution: {directory: .., type: directory}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
 
@@ -961,7 +961,7 @@ snapshots:
 
   json-stringify-safe@5.0.1: {}
 
-  letsbonk-sdk@file:..(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10):
+  letsbonkdotfun-sdk@file:..(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10):
     dependencies:
       '@coral-xyz/anchor': 0.31.1(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.4.13(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)

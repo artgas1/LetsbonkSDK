@@ -1,7 +1,6 @@
 import { 
   PublicKey, 
   Connection, 
-  Transaction, 
   TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
@@ -25,8 +24,8 @@ export async function fetchAltAccount(connection: Connection): Promise<AddressLo
     const altAddress = getAltAccountPublicKey();
     const result = await connection.getAddressLookupTable(altAddress);
     return result.value;
-  } catch (error) {
-    console.warn('Failed to fetch ALT account:', error);
+  } catch {
+    // Failed to fetch ALT account, returning null to continue without ALT
     return null;
   }
 }

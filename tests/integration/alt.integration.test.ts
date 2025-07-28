@@ -1,4 +1,4 @@
-import { Keypair, VersionedTransaction, Transaction, PublicKey } from '@solana/web3.js';
+import { Keypair, VersionedTransaction, PublicKey } from '@solana/web3.js';
 import { LetsBonkSDK } from '../../src';
 import { CreateTokenMetadata } from '../../src/types';
 import { getAltAccountPublicKey, fetchAltAccount } from '../../src/utils/transaction';

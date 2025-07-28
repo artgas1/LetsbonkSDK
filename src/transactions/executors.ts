@@ -1,4 +1,4 @@
-import { Connection, Transaction, VersionedTransaction, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, VersionedTransaction, Keypair } from '@solana/web3.js';
 import { getLogger } from '../core/logger';
 
 const logger = getLogger();
@@ -9,31 +9,21 @@ const logger = getLogger();
  */
 export async function sendAndConfirmTransactionWithRetry(
   connection: Connection,
-  transaction: Transaction | VersionedTransaction,
+  transaction: VersionedTransaction,
   signers: Keypair[],
   skipPreflight: boolean = true,
   maxRetries: number = 3
 ): Promise<string> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Handle both transaction types
-      let signature: string;
-      if (transaction instanceof VersionedTransaction) {
-        // For VersionedTransaction, we need to sign it first
-        transaction.sign(signers);
-        signature = await connection.sendTransaction(transaction, {
-          skipPreflight,
-          maxRetries: 0, // We handle retries ourselves
-        });
-        // Confirm the transaction
-        await connection.confirmTransaction(signature, 'confirmed');
-      } else {
-        // For legacy Transaction, use the standard method
-        signature = await sendAndConfirmTransaction(connection, transaction, signers, {
-          skipPreflight,
-          commitment: 'confirmed',
-        });
-      }
+      // Sign the VersionedTransaction
+      transaction.sign(signers);
+      const signature = await connection.sendTransaction(transaction, {
+        skipPreflight,
+        maxRetries: 0, // We handle retries ourselves
+      });
+      // Confirm the transaction
+      await connection.confirmTransaction(signature, 'confirmed');
 
       if (attempt > 1) {
         logger.info(`✅ Transaction succeeded on attempt ${attempt}`, { attempt, signature });

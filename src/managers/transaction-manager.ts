@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, VersionedTransaction } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { LetsBonkIDL } from '../IDL';
 import {
@@ -48,11 +48,8 @@ export class TransactionManager {
   /**
    * Helper to get instruction count from any transaction type
    */
-  private getInstructionCount(transaction: Transaction | VersionedTransaction): number {
-    if (transaction instanceof VersionedTransaction) {
-      return transaction.message.compiledInstructions.length;
-    }
-    return transaction.instructions.length;
+  private getInstructionCount(transaction: VersionedTransaction): number {
+    return transaction.message.compiledInstructions.length;
   }
 
   /**

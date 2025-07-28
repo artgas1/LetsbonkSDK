@@ -4,55 +4,51 @@ import { CreateTokenMetadata } from '../../src/types';
 import { testConnection, getFundedKeypair, waitForTransaction } from './setup';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { IntegrationTestHelpers } from './test-helpers';
-import { Transaction, VersionedTransaction } from '@solana/web3.js';
+import { VersionedTransaction } from '@solana/web3.js';
 
 // Transaction tracking for final resume
 interface TransactionRecord {
+  type: string;
   signature: string;
-  operation: string;
+  timestamp: number;
   details: string;
-  testSuite: string;
-  testName: string;
-  timestamp: Date;
-  success: boolean;
 }
 
 const transactionHistory: TransactionRecord[] = [];
 
 // Helper function to record transactions
 const recordTransaction = (
+  type: string,
   signature: string,
-  operation: string,
-  details: string,
-  testSuite: string,
-  testName: string,
-  success: boolean = true
+  details: string
 ) => {
+  const timestamp = Date.now();
+  console.log(`📝 Recording ${type} transaction: ${signature}`);
+  
   transactionHistory.push({
+    type,
     signature,
-    operation,
-    details,
-    testSuite,
-    testName,
-    timestamp: new Date(),
-    success
+    timestamp,
+    details
   });
+};
+
+/**
+ * Utility helpers for transaction testing
+ */
+const testHelpers = {
+  /**
+   * Helper to get instruction count from any transaction type
+   */
+  getInstructionCount: (transaction: VersionedTransaction): number => {
+    return transaction.message.compiledInstructions.length;
+  }
 };
 
 // Add process-level error handler to prevent unhandled rejections from failing tests
 process.on('unhandledRejection', (reason, promise) => {
   console.log('Unhandled Rejection caught (test environment):', reason);
 });
-
-/**
- * Helper to get instruction count from any transaction type
- */
-const getInstructionCount = (transaction: Transaction | VersionedTransaction): number => {
-  if (transaction instanceof VersionedTransaction) {
-    return transaction.message.compiledInstructions.length;
-  }
-  return transaction.instructions.length;
-};
 
 describe('LetsBonkSDK Integration Tests', () => {
   let connection: Connection;
@@ -98,12 +94,9 @@ describe('LetsBonkSDK Integration Tests', () => {
     if (initResult.success && initResult.data.signature) {
       await waitForTransaction(initResult.data.signature);
       recordTransaction(
-        initResult.data.signature,
         'INITIALIZE',
-        `Token: ${metadata.name} (${metadata.symbol}) | Mint: ${mintKeypair.publicKey.toString()}`,
-        'Setup',
-        'Shared Token Creation',
-        true
+        initResult.data.signature,
+        `Token: ${metadata.name} (${metadata.symbol}) | Mint: ${mintKeypair.publicKey.toString()}`
       );
 
       // Then buy some tokens for sell tests
@@ -123,12 +116,9 @@ describe('LetsBonkSDK Integration Tests', () => {
       if (buyResult.success && buyResult.data.signature) {
         await waitForTransaction(buyResult.data.signature);
         recordTransaction(
-          buyResult.data.signature,
           'BUY',
-          `Amount: 0.2 SOL | Mint: ${mintKeypair.publicKey.toString()}`,
-          'Setup',
-          'Initial Token Purchase',
-          true
+          buyResult.data.signature,
+          `Amount: 0.2 SOL | Mint: ${mintKeypair.publicKey.toString()}`
         );
       }
     }
@@ -144,8 +134,8 @@ describe('LetsBonkSDK Integration Tests', () => {
     console.log('📊 INTEGRATION TEST EXECUTION SUMMARY');
     console.log('=====================================');
     console.log(`Total Transactions Executed: ${transactionHistory.length}`);
-    console.log(`Successful Transactions: ${transactionHistory.filter(t => t.success).length}`);
-    console.log(`Failed Transactions: ${transactionHistory.filter(t => !t.success).length}`);
+          console.log(`Successful Transactions: ${transactionHistory.filter(t => t.signature !== 'N/A').length}`);
+      console.log(`Failed Transactions: ${transactionHistory.filter(t => t.signature === 'N/A').length}`);
     console.log('\n');
 
     if (transactionHistory.length > 0) {
@@ -153,20 +143,19 @@ describe('LetsBonkSDK Integration Tests', () => {
       console.log('================================');
 
       const groupedByTestSuite = transactionHistory.reduce((acc, tx) => {
-        if (!acc[tx.testSuite]) {
-          acc[tx.testSuite] = [];
+        if (!acc[tx.type]) {
+          acc[tx.type] = [];
         }
-        acc[tx.testSuite].push(tx);
+        acc[tx.type].push(tx);
         return acc;
       }, {} as Record<string, TransactionRecord[]>);
 
       Object.entries(groupedByTestSuite).forEach(([testSuite, transactions]) => {
         console.log(`\n🔹 ${testSuite}:`);
         transactions.forEach((tx, index) => {
-          const status = tx.success ? '✅' : '❌';
-          const timestamp = tx.timestamp.toISOString().split('T')[1].split('.')[0];
-          console.log(`  ${index + 1}. ${status} [${timestamp}] ${tx.operation}`);
-          console.log(`     Test: ${tx.testName}`);
+                     const status = tx.signature !== 'N/A' ? '✅' : '❌';
+           const timestamp = new Date(tx.timestamp).toISOString().split('T')[1].split('.')[0];
+           console.log(`  ${index + 1}. ${status} [${timestamp}] ${tx.type}`);
           console.log(`     Details: ${tx.details}`);
           console.log(`     Signature: ${tx.signature}`);
           console.log('');
@@ -176,8 +165,8 @@ describe('LetsBonkSDK Integration Tests', () => {
       console.log('🔗 QUICK SIGNATURE REFERENCE:');
       console.log('=============================');
       transactionHistory.forEach((tx, index) => {
-        const status = tx.success ? '✅' : '❌';
-        console.log(`${index + 1}. ${status} ${tx.operation} - ${tx.signature}`);
+        const status = tx.signature !== 'N/A' ? '✅' : '❌';
+        console.log(`${index + 1}. ${status} ${tx.type} - ${tx.signature}`);
       });
     } else {
       console.log('⚠️  No transactions were recorded during the test run.');
@@ -230,12 +219,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (result.data.signature) {
           await waitForTransaction(result.data.signature);
           recordTransaction(
-            result.data.signature,
             'INITIALIZE',
-            `Token: ${metadata.name} (${metadata.symbol}) | Mint: ${mintKeypair.publicKey.toString()}`,
-            'Token Creation',
-            'Initialize Token Pool',
-            true
+            result.data.signature,
+            `Token: ${metadata.name} (${metadata.symbol}) | Mint: ${mintKeypair.publicKey.toString()}`
           );
           console.log('✅ Token creation transaction confirmed');
         }
@@ -270,12 +256,9 @@ describe('LetsBonkSDK Integration Tests', () => {
       if (initResult.success && initResult.data.signature) {
         await waitForTransaction(initResult.data.signature);
         recordTransaction(
-          initResult.data.signature,
           'INITIALIZE',
-          `Token: ${metadata.name} (${metadata.symbol}) | Mint: ${mintKeypair.publicKey.toString()}`,
-          'Token Creation',
-          'Create and Buy Token - Initialize',
-          true
+          initResult.data.signature,
+          `Token: ${metadata.name} (${metadata.symbol}) | Mint: ${mintKeypair.publicKey.toString()}`
         );
       }
 
@@ -302,12 +285,9 @@ describe('LetsBonkSDK Integration Tests', () => {
       if (result.success && result.data.signature) {
         await waitForTransaction(result.data.signature);
         recordTransaction(
-          result.data.signature,
           'BUY',
-          `Amount: ${buyAmountSol} SOL | Mint: ${mintKeypair.publicKey.toString()}`,
-          'Token Creation',
-          'Create and Buy Token - Purchase',
-          true
+          result.data.signature,
+          `Amount: ${buyAmountSol} SOL | Mint: ${mintKeypair.publicKey.toString()}`
         );
         console.log('✅ Token creation + buy transaction confirmed');
       }
@@ -342,12 +322,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (buyResult.data.signature) {
           await waitForTransaction(buyResult.data.signature);
           recordTransaction(
-            buyResult.data.signature,
             'BUY',
-            `Amount: ${buyAmountSol} SOL | Mint: ${sharedTestMint.toString()} | Buyer: ${buyer.publicKey.toString()}`,
-            'Trading Operations',
-            'Execute Buy Transaction',
-            true
+            buyResult.data.signature,
+            `Amount: ${buyAmountSol} SOL | Mint: ${sharedTestMint.toString()} | Buyer: ${buyer.publicKey.toString()}`
           );
           console.log('✅ Buy transaction confirmed');
         }
@@ -374,12 +351,9 @@ describe('LetsBonkSDK Integration Tests', () => {
       if (buyResult.success && buyResult.data.signature) {
         await waitForTransaction(buyResult.data.signature);
         recordTransaction(
-          buyResult.data.signature,
           'BUY',
-          `Amount: 0.05 SOL | Mint: ${sharedTestMint.toString()} | Seller: ${seller.publicKey.toString()} (for sell test)`,
-          'Trading Operations',
-          'Buy Tokens for Sell Test',
-          true
+          buyResult.data.signature,
+          `Amount: 0.05 SOL | Mint: ${sharedTestMint.toString()} | Seller: ${seller.publicKey.toString()} (for sell test)`
         );
       }
 
@@ -405,12 +379,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (sellResult.data.signature) {
           await waitForTransaction(sellResult.data.signature);
           recordTransaction(
-            sellResult.data.signature,
             'SELL',
-            `Amount: 1,000,000 tokens | Mint: ${sharedTestMint.toString()} | Seller: ${seller.publicKey.toString()}`,
-            'Trading Operations',
-            'Execute Sell Transaction',
-            true
+            sellResult.data.signature,
+            `Amount: 1,000,000 tokens | Mint: ${sharedTestMint.toString()} | Seller: ${seller.publicKey.toString()}`
           );
           console.log('✅ Sell transaction confirmed');
         }
@@ -418,12 +389,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         console.log('Sell failed (expected if insufficient balance):', sellResult.error);
         // Record failed transaction for completeness
         recordTransaction(
-          'N/A',
           'SELL',
-          `Amount: 1,000,000 tokens | Mint: ${sharedTestMint.toString()} | Error: ${sellResult.error?.message}`,
-          'Trading Operations',
-          'Execute Sell Transaction',
-          false
+          'N/A',
+          `Amount: 1,000,000 tokens | Mint: ${sharedTestMint.toString()} | Error: ${sellResult.error?.message}`
         );
         // This might fail if insufficient balance, which is okay for testing
       }
@@ -522,12 +490,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (result.data.signature) {
           await waitForTransaction(result.data.signature);
           recordTransaction(
-            result.data.signature,
             'INITIALIZE_AND_BUY',
-            `Token: ${metadata.name} (${metadata.symbol}) | Buy Amount: ${Number(buyAmountLamports) / 10 ** 9} SOL | Mint: ${mintKeypair.publicKey.toString()}`,
-            'Initialize and Buy',
-            'Atomic Initialize and Buy',
-            true
+            result.data.signature,
+            `Token: ${metadata.name} (${metadata.symbol}) | Buy Amount: ${Number(buyAmountLamports) / 10 ** 9} SOL | Mint: ${mintKeypair.publicKey.toString()}`
           );
           console.log('✅ Atomic initialize and buy transaction confirmed');
         }
@@ -577,9 +542,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         expect(signerKeys).toContain(mintKeypair.publicKey.toString());
 
         // Verify transaction has instructions
-        expect(getInstructionCount(constructedTx.transaction)).toBeGreaterThan(0);
+        expect(testHelpers.getInstructionCount(constructedTx.transaction)).toBeGreaterThan(0);
 
-        console.log(`✅ Built transaction with ${getInstructionCount(constructedTx.transaction)} instructions`);
+        console.log(`✅ Built transaction with ${testHelpers.getInstructionCount(constructedTx.transaction)} instructions`);
         console.log(`✅ Requires ${constructedTx.signers.length} signers`);
         console.log(`✅ Description: ${constructedTx.description}`);
 
@@ -590,12 +555,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (executeResult.success && executeResult.data.signature) {
           await waitForTransaction(executeResult.data.signature);
           recordTransaction(
-            executeResult.data.signature,
             'BUILD_INITIALIZE_AND_BUY',
-            `Token: ${metadata.name} (${metadata.symbol}) | Buy Amount: ${buyAmountSol} SOL | Mint: ${mintKeypair.publicKey.toString()}`,
-            'Initialize and Buy',
-            'Build and Execute Initialize and Buy',
-            true
+            executeResult.data.signature,
+            `Token: ${metadata.name} (${metadata.symbol}) | Buy Amount: ${buyAmountSol} SOL | Mint: ${mintKeypair.publicKey.toString()}`
           );
           console.log('✅ Built transaction executed successfully');
         }
@@ -639,7 +601,7 @@ describe('LetsBonkSDK Integration Tests', () => {
         expect(constructedTx.description).toContain('Initialize');
         expect(constructedTx.description).not.toContain('buy');
 
-        console.log(`✅ Built initialize-only transaction with ${getInstructionCount(constructedTx.transaction)} instructions`);
+        console.log(`✅ Built initialize-only transaction with ${testHelpers.getInstructionCount(constructedTx.transaction)} instructions`);
         console.log(`✅ Description: ${constructedTx.description}`);
 
         // Execute the built transaction
@@ -649,12 +611,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (executeResult.success && executeResult.data.signature) {
           await waitForTransaction(executeResult.data.signature);
           recordTransaction(
-            executeResult.data.signature,
             'BUILD_INITIALIZE_ONLY',
-            `Token: ${metadata.name} (${metadata.symbol}) | Initialize Only | Mint: ${mintKeypair.publicKey.toString()}`,
-            'Initialize and Buy',
-            'Build and Execute Initialize Only',
-            true
+            executeResult.data.signature,
+            `Token: ${metadata.name} (${metadata.symbol}) | Initialize Only | Mint: ${mintKeypair.publicKey.toString()}`
           );
           console.log('✅ Initialize-only transaction executed successfully');
         }
@@ -694,12 +653,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (result.data.signature) {
           await waitForTransaction(result.data.signature);
           recordTransaction(
-            result.data.signature,
             'INITIALIZE_AND_BUY',
-            `Edge case metadata | Token: ${edgeCaseMetadata.name} (${edgeCaseMetadata.symbol}) | Buy: ${buyAmountSol} SOL`,
-            'Initialize and Buy',
-            'Edge Case Metadata Test',
-            true
+            result.data.signature,
+            `Edge case metadata | Token: ${edgeCaseMetadata.name} (${edgeCaseMetadata.symbol}) | Buy: ${buyAmountSol} SOL`
           );
           console.log('✅ Edge case metadata transaction confirmed');
         }
@@ -739,12 +695,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (result.data.signature) {
           await waitForTransaction(result.data.signature);
           recordTransaction(
-            result.data.signature,
             'INITIALIZE_AND_BUY',
-            `Token: ${metadata.name} (${metadata.symbol}) | Buy: ${moderateBuyAmount} SOL`,
-            'Initialize and Buy',
-            'Variable Buy Amount Test',
-            true
+            result.data.signature,
+            `Token: ${metadata.name} (${metadata.symbol}) | Buy: ${moderateBuyAmount} SOL`
           );
           console.log('✅ Variable amount transaction confirmed');
         }
@@ -790,12 +743,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         if (executeResult.success && executeResult.data.signature) {
           await waitForTransaction(executeResult.data.signature);
           recordTransaction(
-            executeResult.data.signature,
             'BUILD_EXECUTE_RECOVERY',
-            `Token: ${metadata.name} (${metadata.symbol}) | Build + Execute pattern`,
-            'Initialize and Buy',
-            'Builder Pattern Error Recovery Test',
-            true
+            executeResult.data.signature,
+            `Token: ${metadata.name} (${metadata.symbol}) | Build + Execute pattern`
           );
           console.log('✅ Builder pattern execution confirmed');
         }
@@ -821,12 +771,9 @@ describe('LetsBonkSDK Integration Tests', () => {
 
       // Record failed transaction for completeness
       recordTransaction(
-        'N/A',
         'BUY',
-        `Amount: 0.01 SOL | Invalid Mint: ${invalidMint.toString()} | Error: ${result.error?.message}`,
-        'Error Handling',
-        'Invalid Token Mint Test',
-        false
+        'N/A',
+        `Amount: 0.01 SOL | Invalid Mint: ${invalidMint.toString()} | Error: ${result.error?.message}`
       );
     });
 
@@ -847,12 +794,9 @@ describe('LetsBonkSDK Integration Tests', () => {
 
       // Record failed transaction for completeness
       recordTransaction(
-        'N/A',
         'BUY',
-        `Amount: 1000 SOL | Mint: ${sharedTestMint.toString()} | Error: ${result.error?.message}`,
-        'Error Handling',
-        'Insufficient Funds Test',
-        false
+        'N/A',
+        `Amount: 1000 SOL | Mint: ${sharedTestMint.toString()} | Error: ${result.error?.message}`
       );
     });
   });

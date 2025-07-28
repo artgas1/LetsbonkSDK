@@ -1,6 +1,6 @@
-import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, Keypair, VersionedTransaction } from '@solana/web3.js';
 import { buildBuyInstruction, buildSellInstruction } from '../instructions';
-import { setupTransaction } from '../utils/transaction';
+import { setupTransaction, setupV0Transaction } from '../utils/transaction';
 import {
   createOrGetTokenAccount,
   createTemporaryWSOLAccount,
@@ -24,7 +24,7 @@ export async function buildCreateTokenTransaction(
   metadata: CreateTokenMetadata,
   launchParams?: Partial<LaunchParams>,
   priorityFees?: PriorityFee
-): Promise<{ transaction: Transaction; baseTokenAccount: PublicKey }> {
+): Promise<{ transaction: VersionedTransaction; baseTokenAccount: PublicKey }> {
   const { name, symbol, external_url } = metadata;
 
   // Determine metadata URI: use external_url if provided, otherwise upload to IPFS
@@ -50,8 +50,8 @@ export async function buildCreateTokenTransaction(
     quoteRaising = DEFAULT_QUOTE_RAISING,
   } = launchParams || {};
 
-  // Setup transaction with compute budget
-  const transaction = await setupTransaction(connection, payerKeypair.publicKey, priorityFees);
+  // Collect all instructions
+  const instructions = [];
 
   // Use Anchor-generated instruction instead of manual instruction
   const launchIx = await createAnchorInitializeInstruction(
@@ -68,15 +68,18 @@ export async function buildCreateTokenTransaction(
     quoteRaising
   );
 
-  transaction.add(launchIx);
+  instructions.push(launchIx);
 
   // Create token account for the new mint
   const { address: baseTokenAccount, instruction: baseTokenAccountIx } =
     await createOrGetTokenAccount(connection, payerKeypair.publicKey, mintKeypair.publicKey);
 
   if (baseTokenAccountIx) {
-    transaction.add(baseTokenAccountIx);
+    instructions.push(baseTokenAccountIx);
   }
+
+  // Setup v0 transaction with ALT support
+  const transaction = await setupV0Transaction(connection, payerKeypair.publicKey, instructions, priorityFees);
 
   return { transaction, baseTokenAccount };
 }
@@ -92,9 +95,7 @@ export async function buildBuyTransaction(
   amountIn: bigint, // Raw SOL amount in lamports
   minimumAmountOut: bigint, // Raw token amount (already includes decimals)
   priorityFees?: PriorityFee
-): Promise<{ transaction: Transaction; additionalSigners: Keypair[] }> {
-  // Setup transaction with compute budget
-  const transaction = await setupTransaction(connection, payerKeypair.publicKey, priorityFees);
+): Promise<{ transaction: VersionedTransaction; additionalSigners: Keypair[] }> {
   const additionalSigners: Keypair[] = [];
 
   // Get token account for the specified mint
@@ -109,15 +110,16 @@ export async function buildBuyTransaction(
       Number(amountIn) / Math.pow(10, 9) // Convert lamports to SOL for WSOL account creation
     );
 
-  // Add base token account creation instructions to transaction
+  // Collect all instructions
+  const instructions = [];
+
+  // Add base token account creation instructions
   if (baseTokenInstruction) {
-    transaction.add(baseTokenInstruction);
+    instructions.push(baseTokenInstruction);
   }
 
-  // Add WSOL account creation instructions to transaction
-  for (const ix of wsolInstructions) {
-    transaction.add(ix);
-  }
+  // Add WSOL account creation instructions
+  instructions.push(...wsolInstructions);
 
   // Derive PDAs
   const pdas = PDAUtils.deriveAll(mintPubkey, WSOL_TOKEN);
@@ -135,11 +137,14 @@ export async function buildBuyTransaction(
     minimumAmountOut, // Pass BigInt directly - no conversion!
   });
 
-  transaction.add(buyIx);
+  instructions.push(buyIx);
 
   // Close WSOL account to recover SOL at the end
   const closeWSOLIx = getCloseWSOLInstruction(wsolTokenAccount, payerKeypair.publicKey);
-  transaction.add(closeWSOLIx);
+  instructions.push(closeWSOLIx);
+
+  // Setup v0 transaction with ALT support
+  const transaction = await setupV0Transaction(connection, payerKeypair.publicKey, instructions, priorityFees);
 
   return { transaction, additionalSigners };
 }
@@ -155,9 +160,7 @@ export async function buildSellTransaction(
   amountIn: bigint, // Raw token amount (already includes decimals)
   minimumAmountOut: bigint, // Raw SOL amount in lamports
   priorityFees?: PriorityFee
-): Promise<{ transaction: Transaction; additionalSigners: Keypair[] }> {
-  // Setup transaction with compute budget
-  const transaction = await setupTransaction(connection, payerKeypair.publicKey, priorityFees);
+): Promise<{ transaction: VersionedTransaction; additionalSigners: Keypair[] }> {
   const additionalSigners: Keypair[] = [];
 
   // Get token account for the specified mint
@@ -172,15 +175,16 @@ export async function buildSellTransaction(
       0 // No initial SOL needed for sell
     );
 
-  // Add base token account creation instructions to transaction
+  // Collect all instructions
+  const instructions = [];
+
+  // Add base token account creation instructions
   if (baseTokenInstruction) {
-    transaction.add(baseTokenInstruction);
+    instructions.push(baseTokenInstruction);
   }
 
-  // Add WSOL account creation instructions to transaction
-  for (const ix of wsolInstructions) {
-    transaction.add(ix);
-  }
+  // Add WSOL account creation instructions
+  instructions.push(...wsolInstructions);
 
   // Derive PDAs
   const pdas = PDAUtils.deriveAll(mintPubkey, WSOL_TOKEN);
@@ -198,11 +202,14 @@ export async function buildSellTransaction(
     minimumAmountOut, // Pass BigInt directly - no conversion!
   });
 
-  transaction.add(sellIx);
+  instructions.push(sellIx);
 
   // Close WSOL account to recover SOL at the end
   const closeWSOLIx = getCloseWSOLInstruction(wsolTokenAccount, payerKeypair.publicKey);
-  transaction.add(closeWSOLIx);
+  instructions.push(closeWSOLIx);
+
+  // Setup v0 transaction with ALT support
+  const transaction = await setupV0Transaction(connection, payerKeypair.publicKey, instructions, priorityFees);
 
   return { transaction, additionalSigners };
 }
@@ -220,18 +227,61 @@ export async function buildInitializeAndBuyTransaction(
   buyAmountLamports: bigint, // Raw lamports amount for precision
   launchParams?: Partial<LaunchParams>,
   priorityFees?: PriorityFee
-): Promise<{ transaction: Transaction; signers: Keypair[]; baseTokenAccount: PublicKey }> {
-  // Step 1: Build the token launch transaction
-  const { transaction, baseTokenAccount } = await buildCreateTokenTransaction(
+): Promise<{ transaction: VersionedTransaction; signers: Keypair[]; baseTokenAccount: PublicKey }> {
+  const { name, symbol, external_url } = tokenMetadata;
+
+  // Determine metadata URI: use external_url if provided, otherwise upload to IPFS
+  let uri: string;
+  if (external_url && external_url.trim() !== '') {
+    // Use provided external URL
+    uri = external_url;
+  } else {
+    // Upload metadata to IPFS
+    const uploadResult = await uploadTokenMetadata(tokenMetadata);
+    if (!uploadResult.success) {
+      throw new Error(
+        `Failed to upload metadata to IPFS: ${uploadResult.error || 'Unknown error'}`
+      );
+    }
+    uri = uploadResult.metadataUri;
+  }
+
+  const {
+    decimals = 6,
+    supply = DEFAULT_SUPPLY,
+    baseSell = DEFAULT_BASE_SELL,
+    quoteRaising = DEFAULT_QUOTE_RAISING,
+  } = launchParams || {};
+
+  // Collect all instructions
+  const instructions = [];
+
+  // Create launch instruction
+  const launchIx = await createAnchorInitializeInstruction(
     connection,
-    payer,
-    baseMint,
-    tokenMetadata,
-    launchParams,
-    priorityFees
+    payer.publicKey,
+    creator,
+    baseMint.publicKey,
+    uri,
+    name,
+    symbol,
+    decimals,
+    supply,
+    baseSell,
+    quoteRaising
   );
 
-  // Step 2: Add buy instructions if buyAmountLamports > 0
+  instructions.push(launchIx);
+
+  // Create token account for the new mint
+  const { address: baseTokenAccount, instruction: baseTokenAccountIx } =
+    await createOrGetTokenAccount(connection, payer.publicKey, baseMint.publicKey);
+
+  if (baseTokenAccountIx) {
+    instructions.push(baseTokenAccountIx);
+  }
+
+  // Add buy instructions if buyAmountLamports > 0
   if (buyAmountLamports && buyAmountLamports > 0n) {
     // Calculate minimum tokens to receive (5% slippage)
     // Convert lamports to SOL for calculation, then back to raw tokens
@@ -256,9 +306,7 @@ export async function buildInitializeAndBuyTransaction(
       );
 
     // Add WSOL account creation instructions
-    for (const ix of wsolInstructions) {
-      transaction.add(ix);
-    }
+    instructions.push(...wsolInstructions);
 
     // Create buy instruction
     const buyIx = buildBuyInstruction({
@@ -273,23 +321,19 @@ export async function buildInitializeAndBuyTransaction(
       minimumAmountOut: minimumAmountOutRaw, // Pass BigInt raw token amount
     });
 
-    transaction.add(buyIx);
+    instructions.push(buyIx);
 
     // Close WSOL account
     const closeWSOLIx = getCloseWSOLInstruction(wsolTokenAccount, payer.publicKey);
-    transaction.add(closeWSOLIx);
-
-    return {
-      transaction,
-      signers: [payer, baseMint],
-      baseTokenAccount,
-    };
-  } else {
-    // Just initialize without buy
-    return {
-      transaction,
-      signers: [payer, baseMint],
-      baseTokenAccount,
-    };
+    instructions.push(closeWSOLIx);
   }
+
+  // Setup v0 transaction with ALT support
+  const transaction = await setupV0Transaction(connection, payer.publicKey, instructions, priorityFees);
+
+  return {
+    transaction,
+    signers: [payer, baseMint],
+    baseTokenAccount,
+  };
 }

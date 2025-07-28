@@ -3,7 +3,8 @@ import { LetsBonkSDK } from '../../src/letsbonk-sdk';
 import { CreateTokenMetadata } from '../../src/types';
 import { testConnection, getFundedKeypair, waitForTransaction } from './setup';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
-import { TestHelpers } from './test-helpers';
+import { IntegrationTestHelpers } from './test-helpers';
+import { Transaction, VersionedTransaction } from '@solana/web3.js';
 
 // Transaction tracking for final resume
 interface TransactionRecord {
@@ -42,6 +43,16 @@ const recordTransaction = (
 process.on('unhandledRejection', (reason, promise) => {
   console.log('Unhandled Rejection caught (test environment):', reason);
 });
+
+/**
+ * Helper to get instruction count from any transaction type
+ */
+const getInstructionCount = (transaction: Transaction | VersionedTransaction): number => {
+  if (transaction instanceof VersionedTransaction) {
+    return transaction.message.compiledInstructions.length;
+  }
+  return transaction.instructions.length;
+};
 
 describe('LetsBonkSDK Integration Tests', () => {
   let connection: Connection;
@@ -566,9 +577,9 @@ describe('LetsBonkSDK Integration Tests', () => {
         expect(signerKeys).toContain(mintKeypair.publicKey.toString());
 
         // Verify transaction has instructions
-        expect(constructedTx.transaction.instructions.length).toBeGreaterThan(0);
+        expect(getInstructionCount(constructedTx.transaction)).toBeGreaterThan(0);
 
-        console.log(`✅ Built transaction with ${constructedTx.transaction.instructions.length} instructions`);
+        console.log(`✅ Built transaction with ${getInstructionCount(constructedTx.transaction)} instructions`);
         console.log(`✅ Requires ${constructedTx.signers.length} signers`);
         console.log(`✅ Description: ${constructedTx.description}`);
 
@@ -628,7 +639,7 @@ describe('LetsBonkSDK Integration Tests', () => {
         expect(constructedTx.description).toContain('Initialize');
         expect(constructedTx.description).not.toContain('buy');
 
-        console.log(`✅ Built initialize-only transaction with ${constructedTx.transaction.instructions.length} instructions`);
+        console.log(`✅ Built initialize-only transaction with ${getInstructionCount(constructedTx.transaction)} instructions`);
         console.log(`✅ Description: ${constructedTx.description}`);
 
         // Execute the built transaction

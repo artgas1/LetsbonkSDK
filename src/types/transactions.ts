@@ -1,11 +1,11 @@
-import { Transaction, Keypair, Commitment, Finality, PublicKey } from '@solana/web3.js';
+import { Transaction, VersionedTransaction, Keypair, Commitment, Finality, PublicKey } from '@solana/web3.js';
 import { PriorityFee } from './core';
 
 /**
  * Transaction construction types
  */
 export type ConstructedTransaction = {
-  transaction: Transaction;
+  transaction: Transaction | VersionedTransaction;
   signers: Keypair[];
   description?: string;
 };

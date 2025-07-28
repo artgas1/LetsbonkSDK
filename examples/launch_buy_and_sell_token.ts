@@ -94,7 +94,7 @@ async function main() {
     console.log('\n🚀 Launching token and buying in one transaction...');
 
     // All amounts in the SDK are now in raw lamports for maximum precision
-            // You can use: import { solToLamports } from 'letsbonkdotfun-sdk'; 
+    // You can use: import { solToLamports } from 'letsbonkdotfun-sdk'; 
     // const buyAmountLamports = solToLamports(0.00001); // Convert 0.00001 SOL to lamports
     const buyAmountLamports = BigInt(10000); // Buy 10,000 lamports (0.00001 SOL) worth of tokens immediately
 
@@ -117,7 +117,10 @@ async function main() {
     }
 
 
-    const transactionDetails = await connection.getParsedTransaction(launchResult.data.signature!);
+    const transactionDetails = await connection.getParsedTransaction(launchResult.data.signature!, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0 // Support v0 transactions with ALT
+    });
     const tokensReceived = transactionDetails?.meta?.postTokenBalances?.find(token => token.mint === mintKeypair.publicKey.toString() && token.owner === payerKeypair.publicKey.toString())?.uiTokenAmount.amount;
     if (!tokensReceived) {
       console.error('❌ No tokens received');
@@ -167,14 +170,14 @@ async function main() {
     console.log(`✅ Bought: ${buyAmountLamports} lamports worth of tokens`);
     console.log(`✅ Sold: All purchased tokens`);
     console.log('✅ Library import working correctly!');
-    
+
     // Explicitly exit the process to prevent hanging
     process.exit(0);
 
   } catch (error) {
     console.error('❌ Script failed:', error);
     console.error('\n💡 Common issues:');
-            console.error('  - Make sure letsbonkdotfun-sdk is installed: npm install letsbonkdotfun-sdk');
+    console.error('  - Make sure letsbonkdotfun-sdk is installed: npm install letsbonkdotfun-sdk');
     console.error('  - Make sure solana-test-validator is running for localnet');
     console.error('  - Ensure you have SOL in your wallet');
     console.error('  - Check that required programs are deployed');

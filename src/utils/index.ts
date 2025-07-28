@@ -21,9 +21,6 @@ export { getAltAccountPublicKey, fetchAltAccount } from './transaction';
 // Formatting utilities
 export { bufferFromString, basisPointsToPercentage, percentageToBasisPoints } from './formatting';
 
-// Transaction utilities
-export { setupTransaction } from './transaction';
-
 // Validation utilities
 export { isValidPublicKey } from './validation';
 

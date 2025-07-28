@@ -1,6 +1,6 @@
 import { Connection, PublicKey, Transaction, Keypair, VersionedTransaction } from '@solana/web3.js';
 import { buildBuyInstruction, buildSellInstruction } from '../instructions';
-import { setupTransaction, setupV0Transaction } from '../utils/transaction';
+import { setupV0Transaction } from '../utils/transaction';
 import {
   createOrGetTokenAccount,
   createTemporaryWSOLAccount,

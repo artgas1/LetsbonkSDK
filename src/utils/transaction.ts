@@ -32,49 +32,6 @@ export async function fetchAltAccount(connection: Connection): Promise<AddressLo
 }
 
 /**
- * Setup transaction with compute budget and ALT support
- */
-export async function setupTransaction(
-  connection: Connection,
-  payer: PublicKey,
-  priorityFees?: PriorityFee
-): Promise<Transaction> {
-  const { blockhash } = await connection.getLatestBlockhash();
-  const transaction = new Transaction({
-    feePayer: payer,
-    recentBlockhash: blockhash,
-  });
-
-  // Use provided priority fees or fall back to defaults
-  const unitPrice = priorityFees?.unitPrice ?? UNIT_PRICE;
-  const unitBudget = priorityFees?.unitLimit ?? UNIT_BUDGET;
-
-  // Add compute budget instructions
-  transaction.add(
-    // Set compute unit price
-    new TransactionInstruction({
-      keys: [],
-      programId: new PublicKey('ComputeBudget111111111111111111111111111111'),
-      data: Buffer.concat([
-        Buffer.from([3]), // SetComputeUnitPrice instruction
-        Buffer.from(new Uint8Array(new BigUint64Array([BigInt(unitPrice)]).buffer)),
-      ]),
-    }),
-    // Set compute unit limit
-    new TransactionInstruction({
-      keys: [],
-      programId: new PublicKey('ComputeBudget111111111111111111111111111111'),
-      data: Buffer.concat([
-        Buffer.from([2]), // SetComputeUnitLimit instruction
-        Buffer.from(new Uint8Array(new Uint32Array([unitBudget]).buffer)),
-      ]),
-    })
-  );
-
-  return transaction;
-}
-
-/**
  * Setup v0 transaction with compute budget and ALT support
  */
 export async function setupV0Transaction(

@@ -5,12 +5,26 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   TransactionSignature,
-  sendAndConfirmTransaction
+  sendAndConfirmTransaction,
+  VersionedTransaction
 } from '@solana/web3.js';
 import { getOrCreateAssociatedTokenAccount, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-export class TestHelpers {
-  constructor(private connection: Connection) { }
+/**
+ * Test helpers for integration tests
+ */
+export class IntegrationTestHelpers {
+  constructor(private connection: Connection) {}
+
+  /**
+   * Helper to get instruction count from any transaction type
+   */
+  getInstructionCount(transaction: Transaction | VersionedTransaction): number {
+    if (transaction instanceof VersionedTransaction) {
+      return transaction.message.compiledInstructions.length;
+    }
+    return transaction.instructions.length;
+  }
 
   /**
    * Logs test environment information
@@ -30,55 +44,50 @@ export class TestHelpers {
   }
 
   /**
-   * Send and confirm transaction with retry logic - optimized for speed
+   * Send and confirm transaction with retry logic for tests
    */
   async sendAndConfirmTransactionWithRetry(
-    transaction: Transaction,
+    transaction: Transaction | VersionedTransaction,
     signers: Keypair[],
     maxRetries: number = 3
-  ): Promise<TransactionSignature> {
-    let lastError: any;
-
+  ): Promise<string> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // Get fresh blockhash for each attempt
-        const { blockhash } = await this.connection.getLatestBlockhash('processed'); // Use faster commitment
-        transaction.recentBlockhash = blockhash;
-
-        const signature = await sendAndConfirmTransaction(
-          this.connection,
-          transaction,
-          signers,
-          {
-            commitment: 'processed', // Faster than 'confirmed'
-            maxRetries: 1,
-            skipPreflight: false,
-          }
-        );
+        // Handle both transaction types
+        let signature: string;
+        if (transaction instanceof VersionedTransaction) {
+          // For VersionedTransaction, we need to sign it first
+          transaction.sign(signers);
+          signature = await this.connection.sendTransaction(transaction, {
+            skipPreflight: true,
+            maxRetries: 0, // We handle retries ourselves
+          });
+          // Confirm the transaction
+          await this.connection.confirmTransaction(signature, 'confirmed');
+        } else {
+          // For legacy Transaction, use the standard method
+          signature = await sendAndConfirmTransaction(this.connection, transaction, signers, {
+            skipPreflight: true,
+            commitment: 'confirmed',
+          });
+        }
 
         if (attempt > 1) {
-          console.log(`✅ Transaction succeeded on attempt ${attempt}`);
+          console.log(`✅ Test transaction succeeded on attempt ${attempt}`, { attempt, signature });
         }
-
         return signature;
-      } catch (error: any) {
-        lastError = error;
-
-        if (attempt < maxRetries) {
-          // Log retry attempt without spamming
-          if (attempt === 1) {
-            console.log(`⏳ Transaction failed, retrying... (${attempt}/${maxRetries})`);
-          }
-
-          // Wait before retry with faster backoff
-          const delay = Math.min(500 * Math.pow(2, attempt - 1), 2000); // Reduced max delay from 5s to 2s
-          await new Promise(resolve => setTimeout(resolve, delay));
+      } catch (error) {
+        if (attempt === maxRetries) {
+          console.error('Test transaction failed after all retries', { attempt, maxRetries, error });
+          throw error;
         }
+
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
 
-    const errorMessage = lastError?.message || 'Unknown error';
-    throw new Error(`Transaction failed after ${maxRetries} attempts: ${errorMessage}`);
+    throw new Error('Test transaction failed after all retries');
   }
 
   /**

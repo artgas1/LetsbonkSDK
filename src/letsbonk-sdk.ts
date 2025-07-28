@@ -54,10 +54,10 @@ export class LetsBonkSDK {
   private logger: SDKLogger;
   
   // Public manager instances
-  public readonly accounts: AccountManager;
-  public readonly transactions: TransactionManager;
-  public readonly pools: PoolManager;
-  public readonly metadata: MetadataManager;
+  private readonly accounts: AccountManager;
+  private readonly transactions: TransactionManager;
+  private readonly pools: PoolManager;
+  private readonly metadata: MetadataManager;
 
   /**
    * Create a new LetsBonkSDK instance

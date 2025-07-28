@@ -1,4 +1,4 @@
-import { PublicKey, Commitment, Finality, Transaction, Keypair, Connection } from '@solana/web3.js';
+import { PublicKey, Commitment, Finality, Transaction, VersionedTransaction, Keypair, Connection } from '@solana/web3.js';
 
 /**
  * SDK Configuration
@@ -28,7 +28,7 @@ export type TransactionResult = {
   sentAt?: number;
   error?: string;
   message?: string;
-  transaction?: Transaction;
+  transaction?: Transaction | VersionedTransaction;
   signers?: Keypair[];
   description?: string;
 };

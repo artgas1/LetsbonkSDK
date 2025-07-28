@@ -4,7 +4,7 @@ import { LetsBonkSDK } from '../../src/letsbonk-sdk';
 import { CreateTokenMetadata, PriorityFee } from '../../src/types';
 import { testConnection, getFundedKeypair } from './setup';
 import { LocalnetConnection } from './localnet.config';
-import { TestHelpers } from './test-helpers';
+import { IntegrationTestHelpers } from './test-helpers';
 
 describe('Priority Fees Integration Tests', () => {
   let sdk: LetsBonkSDK;

@@ -86,7 +86,8 @@ See the `examples/` directory for complete working examples:
 
 Special thanks to the following projects and contributors:
 
-- **[bonk-mcp](https://github.com/letsbonk-ai/bonk-mcp/)** - For providing excellent MCP (Model Context Protocol) integration and inspiration for this SDK's architecture
+- **[bonk-mcp](https://github.com/letsbonk-ai/bonk-mcp/)**
+- **[pumpdotfun-sdk](https://github.com/rckprtr/pumpdotfun-sdk)**
 
 ## License
 

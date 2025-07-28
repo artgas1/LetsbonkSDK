@@ -25,6 +25,7 @@ GLOBAL_CONFIG='6s1xP3hpbAfFoNtUNF8mfHsjr2Bd97JxFJRWLbL6aHuX'
 PLATFORM_CONFIG='FfYek5vEz23cMkWsdJwG2oa6EphsvXSHrGpdALN4g6W1'
 EVENT_AUTHORITY='2DPAtwB8L12vrMRExbLuyGnC7n2J5LNoZQSejeQGpwkr'
 RAYDIUM_AUTHORITY='WLHv2UAZm6z4KyaaELi5pjdbJh6RESMva1Rnn8pJVVh'
+ALT_RAYDIUM_ACCOUNT='AcL1Vo8oy1ULiavEcjSUcwfBSForXMudcZvDZy5nzJkU'
 
 # Function to print colored output
 print_status() {
@@ -66,12 +67,16 @@ start_validator() {
     local validator_cmd="solana-test-validator"
     validator_cmd+=" --reset"
     validator_cmd+=" --quiet"
+    validator_cmd+=" --warp-slot 355653385"
     validator_cmd+=" --ledger $LEDGER_PATH"
     validator_cmd+=" --url $MAINNET_URL"
     
     # Clone upgradeable programs from mainnet
     validator_cmd+=" --clone-upgradeable-program $LETSBONK_PROGRAM_ID"
     validator_cmd+=" --clone-upgradeable-program $METAPLEX_PROGRAM_ID"
+    
+    # Clone additional account
+    validator_cmd+=" --clone $ALT_RAYDIUM_ACCOUNT"
     
     # Load core configuration accounts from JSON dumps
     local global_config_file="$ACCOUNTS_DIR/global_config.json"

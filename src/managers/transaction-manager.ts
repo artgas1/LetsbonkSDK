@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Keypair } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { LetsBonkIDL } from '../IDL';
 import {
@@ -43,6 +43,16 @@ export class TransactionManager {
     logger: SDKLogger
   ) {
     this.logger = logger.child({ manager: 'TransactionManager' });
+  }
+
+  /**
+   * Helper to get instruction count from any transaction type
+   */
+  private getInstructionCount(transaction: Transaction | VersionedTransaction): number {
+    if (transaction instanceof VersionedTransaction) {
+      return transaction.message.compiledInstructions.length;
+    }
+    return transaction.instructions.length;
   }
 
   /**
@@ -103,7 +113,7 @@ export class TransactionManager {
 
       this.logger.info('Buy transaction built successfully', {
         operation,
-        instructionCount: transaction.instructions.length,
+        instructionCount: this.getInstructionCount(transaction),
         signerCount: constructedTransaction.signers.length,
       });
 
@@ -181,7 +191,7 @@ export class TransactionManager {
 
       this.logger.info('Sell transaction built successfully', {
         operation,
-        instructionCount: transaction.instructions.length,
+        instructionCount: this.getInstructionCount(transaction),
         signerCount: constructedTransaction.signers.length,
       });
 
@@ -253,7 +263,7 @@ export class TransactionManager {
         operation,
         baseMint: params.baseMint.toString(),
         baseTokenAccount: baseTokenAccount?.toString(),
-        instructionCount: transaction.instructions.length,
+        instructionCount: this.getInstructionCount(transaction),
       });
 
       return success(constructedTransaction);
@@ -292,7 +302,7 @@ export class TransactionManager {
 
       this.logger.info('Executing transaction', {
         operation,
-        instructionCount: constructedTransaction.transaction.instructions.length,
+        instructionCount: this.getInstructionCount(constructedTransaction.transaction),
         skipPreflight,
         maxRetries,
         commitment,
@@ -566,7 +576,7 @@ export class TransactionManager {
         operation,
         baseMint: baseMint.publicKey.toString(),
         buyAmountLamports: buyAmountLamports.toString(),
-        instructionCount: transaction.instructions.length,
+        instructionCount: this.getInstructionCount(transaction),
         signerCount: constructedTransaction.signers.length,
       });
 

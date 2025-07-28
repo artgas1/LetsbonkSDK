@@ -9,6 +9,11 @@ export const DEFAULT_MAX_RETRIES = 3;
 export const DEFAULT_TIMEOUT_MS = 60000; // 60 seconds
 
 /**
+ * Alt account for transaction tracking
+ */
+export const ALT_ACCOUNT_ADDRESS = 'AcL1Vo8oy1ULiavEcjSUcwfBSForXMudcZvDZy5nzJkU';
+
+/**
  * Decimals
  */
 export const TOKEN_DECIMAL = 6;

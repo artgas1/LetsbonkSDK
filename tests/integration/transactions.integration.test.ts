@@ -9,17 +9,17 @@ import {
 import { CreateTokenMetadata, LaunchParams } from '../../src/types';
 import { testConnection, getFundedKeypair, waitForTransaction } from './setup';
 import { LocalnetConnection } from './localnet.config';
-import { TestHelpers } from './test-helpers';
+import { IntegrationTestHelpers } from './test-helpers';
 import { createAnchorInitializeInstruction } from '../../src/transactions/utils';
 
 describe('Transactions Integration Tests', () => {
   let localnetConnection: LocalnetConnection;
-  let testHelpers: TestHelpers;
+  let testHelpers: IntegrationTestHelpers;
 
   beforeAll(async () => {
     localnetConnection = new LocalnetConnection();
     await localnetConnection.waitForConnection();
-    testHelpers = new TestHelpers(localnetConnection);
+    testHelpers = new IntegrationTestHelpers(localnetConnection);
     await testHelpers.logTestEnvironment();
   }, 30000); // Reduced from 60s to 30s
 
